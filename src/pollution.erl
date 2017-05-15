@@ -11,10 +11,10 @@
 -author("countess").
 
 %% API
--export([crateMonitor/0, addStation/3, addValue/5, removeValue/4,getOneValue/4,getStationMean/3, getDailyMean/3,importFromCsv/1]).
+-export([createMonitor/0, addStation/3, addValue/5, removeValue/4,getOneValue/4,getStationMean/3, getDailyMean/3,importFromCsv/1]).
 -record(measurement,{measurement_type,date,value}).
 
-crateMonitor() -> #{}.
+createMonitor() -> #{}.
 
 addStation(Name,{X,Y},Monitor) ->
   case maps:keys(maps:filter(fun({KeyN,{KeyX,KeyY}},_)->KeyN =:=Name orelse (KeyX=:=X andalso KeyY=:=Y) end,Monitor) ) of
@@ -26,7 +26,7 @@ addValue({X,Y},Type,Value,Date,Monitor)->
   case maps:keys(maps:filter(fun({_,{KeyX,KeyY}},_)->KeyY =:= Y andalso KeyX =:= X end, Monitor)) of
     [] -> "There's no such station";
     [H] -> Mes = maps:get(H,Monitor),
-      case lists:any( fun(#measurement{measurement_type = MT, date = D, value = V})-> MT =:= Type andalso V =:= Value andalso D =:=Date end ,Mes) of
+      case lists:any( fun(#measurement{measurement_type = MT, date = D})-> MT =:= Type andalso D =:=Date end ,Mes) of
         true -> "There's already this measurement in this station";
         _ -> Monitor#{H := [#measurement{measurement_type = Type, date = Date, value = Value}|Mes]}
       end
@@ -35,7 +35,7 @@ addValue(Name,Type,Value,Date,Monitor)->
   case maps:keys(maps:filter(fun ({KeyN,{_,_}},_)->KeyN =:= Name end,Monitor)) of
     []-> "There's no such station";
     [H]-> Mes = maps:get(H,Monitor),
-      case lists:any( fun(#measurement{measurement_type = MT, date = D, value = V})-> MT =:= Type andalso V =:= Value andalso D =:=Date end ,Mes) of
+      case lists:any( fun(#measurement{measurement_type = MT, date = D})-> MT =:= Type andalso D =:=Date end ,Mes) of
         true -> "There's already this measurement in this station";
         _ -> Monitor#{H := [#measurement{measurement_type = Type, date = Date, value = Value}|Mes]}
       end
@@ -45,7 +45,7 @@ removeValue({X,Y}, Date, Type,Monitor)->
   case maps:keys(maps:filter(fun({_,{KeyX,KeyY}},_)->KeyX =:=X andalso KeyY =:=Y end, Monitor)) of
     [] -> "There's no such station";
     [H]-> Mes =lists:filter(fun(#measurement{measurement_type = MT, date = D })-> MT =/= Type orelse D =/=Date end, maps:get(H,Monitor)),
-        Monitor#{H:=Mes}
+      Monitor#{H:=Mes}
   end;
 removeValue(Name, Date, Type,Monitor)->
   case maps:keys(maps:filter(fun ({KeyN,{_,_}},_)->KeyN =:= Name end,Monitor)) of
@@ -74,7 +74,7 @@ getStationMean({X,Y},Type,Monitor) ->
   case maps:keys(maps:filter(fun({_,{KeyX,KeyY}},_)->KeyX =:=X andalso KeyY =:=Y end, Monitor)) of
     [] -> "There's no such station";
     [H] -> Mes = [V|| #measurement{value = V} <- lists:filter(fun(#measurement{measurement_type = MT})-> MT =:= Type end,maps:get(H,Monitor) )],
-           lists:sum(Mes)/length(Mes)
+      lists:sum(Mes)/length(Mes)
   end;
 getStationMean(Name,Type,Monitor) ->
   case maps:keys(maps:filter(fun ({KeyN,{_,_}},_)->KeyN =:= Name end,Monitor)) of
@@ -90,7 +90,7 @@ getDailyMean(Type,Date,Monitor)->
   end.
 
 importFromCsv(File)->
-  P = crateMonitor(),
+  P = createMonitor(),
   addToMonitor(P,parse_file(File)).
 
 addToMonitor(Monitor,[H|T])->
